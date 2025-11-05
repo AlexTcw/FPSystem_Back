@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,7 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "role",schema = "fps")
-public class Role {
+public class Role implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     @Id
@@ -32,7 +33,8 @@ public class Role {
             name = "rol_permission",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id"),
-            schema = "usuarios"
+            schema = "fps"
     )
     private Set<Permission> permissions = new HashSet<>();
+
 }

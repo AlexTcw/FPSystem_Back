@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 
 
 @Data
-@Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(schema = "usuarios", name = "fps")
+@Entity(name = "User_Security")
+@Table(schema = "fps", name = "usuarios")
 public class User implements Serializable,UserDetails {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -45,7 +45,7 @@ public class User implements Serializable,UserDetails {
     private String password;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"), schema = "usuarios")
+            inverseJoinColumns = @JoinColumn(name = "role_id"), schema = "fps")
     private Set<Role> roles;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,13 +1,9 @@
 package com.fps.back.users.service.users;
 
-import com.fps.back.shared.model.exception.ResourceNotFoundException;
 import com.fps.back.users.model.dto.Consume.ConsumeJsonLogin;
 import com.fps.back.users.model.dto.Consume.ConsumeJsonString;
 import com.fps.back.users.model.dto.Consume.ConsumeJsonUser;
-import com.fps.back.users.model.dto.Response.ResponseJsonNumberGeneric;
-import com.fps.back.users.model.dto.Response.ResponseJsonLogin;
-import com.fps.back.users.model.dto.Response.ResponseJsonString;
-import com.fps.back.users.model.dto.Response.ResponseJsonUser;
+import com.fps.back.users.model.dto.Response.*;
 import com.fps.back.users.model.entity.Role;
 import com.fps.back.users.model.entity.User;
 import com.fps.back.users.repository.RoleRepository;
@@ -74,11 +70,31 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
+    public ResponseJsonUser findUserByUserId(Long userID){
+        if (userID == null){
+            throw new IllegalArgumentException("userID is null");
+        }
+        if (!userRepository.existsById(userID)){
+            throw new UsernameNotFoundException("username not found with id "+userID);
+        }
+        return getResponseJsonUser(userRepository.findUserByUserId(userID));
+    }
+
+    @Override
+    public ResponseJsonUsers findAllUsers(){
+        return new ResponseJsonUsers(userRepository.findAll()
+                .stream()
+                .map(this::getResponseJsonUser)
+                .collect(Collectors.toSet()));
+    }
+
+
+    @Override
     public ResponseJsonUser createOrUpdateUser(ConsumeJsonUser consume, Long userId) {
         if (userId == null && consume == null){
             throw new IllegalArgumentException("Missing data for user");
         }
-        if (roleRepository.existsRoleByRoleId(consume.rolID())){
+        if (!roleRepository.existsRoleByRoleId(consume.rolID())){
             throw new IllegalArgumentException("role not found with id " + consume.rolID());
         }
         User user;
@@ -92,14 +108,18 @@ public class UserServiceImp implements UserService {
             user = createUser(consume);
         }
         userRepository.save(user);
-        return new ResponseJsonUser(
-                user.getUserId(),
-                user.getRoles().stream().flatMap(role -> role.getPermissions().stream().map(permission -> permission.getName().name())).collect(Collectors.toSet()),
-                user.getRoles().stream().map(role -> role.getName().name()).collect(Collectors.toSet()),
-                user.getUsername(),
-                user.getEmail(),
-                user.getFirstName()+" "+user.getLastName()
-        );
+        return getResponseJsonUser(user);
+    }
+
+    @Override
+    public void deleteUserById(Long id) {
+        if (id == null){
+            throw new IllegalArgumentException("user id is null");
+        }
+        if (!userRepository.existsById(id)){
+            throw new IllegalArgumentException("user not found with id " + id);
+        }
+        userRepository.deleteById(id);
     }
 
     public User createUser(ConsumeJsonUser consume){
@@ -158,7 +178,16 @@ public class UserServiceImp implements UserService {
         return username;
     }
 
-
+    private ResponseJsonUser getResponseJsonUser(User user) {
+        return new ResponseJsonUser(
+                user.getUserId(),
+                user.getRoles().stream().flatMap(role -> role.getPermissions().stream().map(permission -> permission.getName().name())).collect(Collectors.toSet()),
+                user.getRoles().stream().map(role -> role.getName().name()).collect(Collectors.toSet()),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName()+" "+user.getLastName()
+        );
+    }
 
     private static void validData(String data,String field) {
         if (data == null){

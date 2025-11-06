@@ -1,5 +1,6 @@
 package com.fps.back.users.config.security;
 
+import com.fps.back.users.model.enums.RoleEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +31,7 @@ public class SecurityConfig {
                         auth -> auth
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/docs/**").permitAll()
-                                .requestMatchers("/user/**").permitAll()
+                                .requestMatchers("/user/**").hasAnyRole(RoleEnum.SUPER_ADMIN.name(), RoleEnum.ADMIN.name())
                                 .requestMatchers("/v3/**").permitAll()
                                 .anyRequest().authenticated()
                 )

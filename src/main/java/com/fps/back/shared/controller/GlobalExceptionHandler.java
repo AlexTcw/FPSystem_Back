@@ -81,8 +81,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ResponseJsonError> handleDuplicateEntryException(DataIntegrityViolationException ex) {
         String message = "This data is already associated with another user.";
 
-        if (ex.getCause() instanceof ConstraintViolationException) {
-            message = "The value you are trying to save is already in use by another user.";
+        if (ex.getCause() instanceof ConstraintViolationException consExp) {
+
+            message = "The value "+consExp.getConstraintName()+" you are trying to save is already in use by another user.";
         }
 
         ResponseJsonError error = new ResponseJsonError(message, HttpStatus.CONFLICT.value());

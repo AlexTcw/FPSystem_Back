@@ -30,6 +30,7 @@ public class SecurityConfig {
                         auth -> auth
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/docs/**").permitAll()
+                                .requestMatchers("/user/**").permitAll()
                                 .requestMatchers("/v3/**").permitAll()
                                 .anyRequest().authenticated()
                 )

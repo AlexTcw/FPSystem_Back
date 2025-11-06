@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder(toBuilder = true)
 @Entity(name = "User_Security")
 @Table(schema = "fps", name = "usuarios")
 public class User implements Serializable,UserDetails {

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Prueba WebSocket STOMP JSON libre</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body style="font-family: monospace; padding: 20px; background-color: #202020; color: #eee;">
+<h2>Prueba STOMP - Envío manual de JSON</h2>
+
+<p>Estado: <span id="status">Desconectado</span></p>
+
+<label>URL WebSocket (SockJS):</label><br>
+<input id="wsUrl" type="text" value="http://localhost:8220/entry"
+       style="width:350px; padding:5px; background:#111; color:#0f0; border:1px solid #555;">
+<button id="connectBtn">Conectar</button>
+
+<hr>
+
+<label>Destino STOMP (MessageMapping):</label><br>
+<input id="destination" type="text" value="/app/createEntry"
+       style="width:350px; padding:5px; background:#111; color:#0f0; border:1px solid #555;" disabled>
+
+<br><br>
+
+<textarea id="jsonInput" rows="6" cols="60"
+          style="background:#111; color:#0f0; padding:10px;"
+          disabled>
+{
+  "userID": 123,
+  "deviceID": 456
+}
+  </textarea>
+<br>
+<button id="sendBtn" disabled>Enviar JSON</button>
+
+<h3>Logs:</h3>
+<pre id="log" style="background:#000; color:#0f0; padding:10px; height:250px; overflow:auto;"></pre>
+
+<script>
+    let client = null;
+
+    const log = (txt) => {
+        const el = document.getElementById('log');
+        el.textContent += txt + '\n';
+        el.scrollTop = el.scrollHeight;
+    };
+
+    const setConnected = (flag) => {
+        document.getElementById('jsonInput').disabled = !flag;
+        document.getElementById('sendBtn').disabled = !flag;
+        document.getElementById('destination').disabled = !flag;
+        document.getElementById('status').textContent = flag ? "Conectado ✅" : "Desconectado";
+    };
+
+    document.getElementById('connectBtn').onclick = () => {
+        const url = document.getElementById('wsUrl').value.trim();
+
+        if (!url) {
+            log("❌ URL inválida");
+            return;
+        }
+
+        log("🔌 Conectando a: " + url + "...");
+
+        const socket = new SockJS(url);
+
+        client = new StompJs.Client({
+            webSocketFactory: () => socket,
+            debug: (str) => log(str),
+            reconnectDelay: 0 // conexión manual, sin reconexión automática
+        });
+
+        client.onConnect = () => {
+            setConnected(true);
+            log("✅ Conectado al broker STOMP");
+
+            // Suscripción fija para ejemplo, puedes hacerla configurable si deseas
+            client.subscribe('/topic/createdEntries', (message) => {
+                try {
+                    const data = JSON.parse(message.body);
+                    log("📩 Respuesta:\n" + JSON.stringify(data, null, 2));
+                } catch {
+                    log("📩 Respuesta no JSON: " + message.body);
+                }
+            });
+
+            document.getElementById('sendBtn').onclick = () => {
+                const raw = document.getElementById('jsonInput').value;
+                const destination = document.getElementById('destination').value.trim();
+
+                if (!destination) {
+                    log("⚠️ Debes especificar un destino STOMP (por ejemplo /app/createEntry)");
+                    return;
+                }
+
+                try {
+                    const parsed = JSON.parse(raw);
+
+                    client.publish({
+                        destination: destination,
+                        body: JSON.stringify(parsed),
+                        headers: { "content-type": "application/json" }
+                    });
+
+                    log("📤 Enviado a " + destination + ":\n" + JSON.stringify(parsed, null, 2));
+                } catch (e) {
+                    log("❌ JSON inválido: " + e.message);
+                }
+            };
+        };
+
+        client.onWebSocketError = (err) => log("❌ Error WebSocket: " + err);
+        client.onStompError = (frame) => log("⚠️ STOMP Error: " + frame.headers["message"]);
+
+        client.activate();
+    };
+</script>
+</body>
+</html>

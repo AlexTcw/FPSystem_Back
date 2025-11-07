@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Data
 @Entity
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "fingerprint",schema = "fps")

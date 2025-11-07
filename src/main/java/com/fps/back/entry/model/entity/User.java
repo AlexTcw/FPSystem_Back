@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -40,12 +39,14 @@ public class User implements Serializable {
     private String password;
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Fingerprint> fingerprints;
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_schedule",
-            joinColumns = @JoinColumn(name = "userId"),
+            joinColumns = @JoinColumn(name = "user_id"), // Asegúrate de usar el nombre real en la tabla
             inverseJoinColumns = @JoinColumn(name = "schedule_id"),
             schema = "fps"
     )
     private Set<Schedule> schedules;
+
 
 }

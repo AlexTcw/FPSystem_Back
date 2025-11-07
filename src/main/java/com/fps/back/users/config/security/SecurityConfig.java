@@ -31,6 +31,8 @@ public class SecurityConfig {
                         auth -> auth
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/docs/**").permitAll()
+                                .requestMatchers("/entry/**").permitAll()
+                                .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("/user/**").hasAnyRole(RoleEnum.SUPER_ADMIN.name(), RoleEnum.ADMIN.name())
                                 .requestMatchers("/v3/**").permitAll()
                                 .anyRequest().authenticated()

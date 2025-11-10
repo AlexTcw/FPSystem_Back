@@ -34,4 +34,16 @@ public class EntryController {
         return fpService.findFPByUserId(consume);
     }
 
+    @MessageMapping("getEntryByFPID")
+    @SendTo("/topic/entriesByFP_ID")
+    public ResponseJsonFP getEntryByFPID(ConsumeJsonLong consume){
+        return fpService.findFPByFBId(consume);
+    }
+
+    @MessageMapping("getEntryByDeviceID")
+    @SendTo("/topic/entriesByDeviceId")
+    public ResponseJsonFP getEntryByDeviceID(ConsumeJsonLong consume){
+        return fpService.findActiveFPByDeviceId(consume);
+    }
+
 }

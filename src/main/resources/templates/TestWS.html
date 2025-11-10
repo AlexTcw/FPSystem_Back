@@ -19,8 +19,15 @@
 <hr>
 
 <label>Destino STOMP (MessageMapping):</label><br>
-<input id="destination" type="text" value="/app/createEntry"
+<input id="destination" type="text" value="/app/getEntryByUserID"
        style="width:350px; padding:5px; background:#111; color:#0f0; border:1px solid #555;" disabled>
+
+<br><br>
+
+<label>Topic a suscribirse (por ejemplo /topic/entriesByUser):</label><br>
+<input id="topicInput" type="text" value="/topic/entriesByUser"
+       style="width:350px; padding:5px; background:#111; color:#0f0; border:1px solid #555;" disabled>
+<button id="subscribeBtn" disabled>Suscribirse</button>
 
 <br><br>
 
@@ -28,10 +35,9 @@
           style="background:#111; color:#0f0; padding:10px;"
           disabled>
 {
-  "userID": 123,
-  "deviceID": 456
+  "key": 6
 }
-  </textarea>
+</textarea>
 <br>
 <button id="sendBtn" disabled>Enviar JSON</button>
 
@@ -40,6 +46,7 @@
 
 <script>
     let client = null;
+    let connected = false;
 
     const log = (txt) => {
         const el = document.getElementById('log');
@@ -48,15 +55,17 @@
     };
 
     const setConnected = (flag) => {
+        connected = flag;
         document.getElementById('jsonInput').disabled = !flag;
         document.getElementById('sendBtn').disabled = !flag;
         document.getElementById('destination').disabled = !flag;
+        document.getElementById('topicInput').disabled = !flag;
+        document.getElementById('subscribeBtn').disabled = !flag;
         document.getElementById('status').textContent = flag ? "Conectado ✅" : "Desconectado";
     };
 
     document.getElementById('connectBtn').onclick = () => {
         const url = document.getElementById('wsUrl').value.trim();
-
         if (!url) {
             log("❌ URL inválida");
             return;
@@ -65,56 +74,73 @@
         log("🔌 Conectando a: " + url + "...");
 
         const socket = new SockJS(url);
-
         client = new StompJs.Client({
             webSocketFactory: () => socket,
             debug: (str) => log(str),
-            reconnectDelay: 0 // conexión manual, sin reconexión automática
+            reconnectDelay: 0
         });
 
         client.onConnect = () => {
             setConnected(true);
             log("✅ Conectado al broker STOMP");
-
-            // Suscripción fija para ejemplo, puedes hacerla configurable si deseas
-            client.subscribe('/topic/createdEntries', (message) => {
-                try {
-                    const data = JSON.parse(message.body);
-                    log("📩 Respuesta:\n" + JSON.stringify(data, null, 2));
-                } catch {
-                    log("📩 Respuesta no JSON: " + message.body);
-                }
-            });
-
-            document.getElementById('sendBtn').onclick = () => {
-                const raw = document.getElementById('jsonInput').value;
-                const destination = document.getElementById('destination').value.trim();
-
-                if (!destination) {
-                    log("⚠️ Debes especificar un destino STOMP (por ejemplo /app/createEntry)");
-                    return;
-                }
-
-                try {
-                    const parsed = JSON.parse(raw);
-
-                    client.publish({
-                        destination: destination,
-                        body: JSON.stringify(parsed),
-                        headers: { "content-type": "application/json" }
-                    });
-
-                    log("📤 Enviado a " + destination + ":\n" + JSON.stringify(parsed, null, 2));
-                } catch (e) {
-                    log("❌ JSON inválido: " + e.message);
-                }
-            };
         };
 
         client.onWebSocketError = (err) => log("❌ Error WebSocket: " + err);
         client.onStompError = (frame) => log("⚠️ STOMP Error: " + frame.headers["message"]);
 
         client.activate();
+    };
+
+    document.getElementById('subscribeBtn').onclick = () => {
+        if (!connected) {
+            log("⚠️ No estás conectado aún");
+            return;
+        }
+
+        const topic = document.getElementById('topicInput').value.trim();
+        if (!topic) {
+            log("⚠️ Ingresa un topic válido (ej: /topic/entriesByUser)");
+            return;
+        }
+
+        log("📡 Suscribiéndose a: " + topic);
+
+        client.subscribe(topic, (message) => {
+            try {
+                const data = JSON.parse(message.body);
+                log("📩 Mensaje recibido en " + topic + ":\n" + JSON.stringify(data, null, 2));
+            } catch {
+                log("📩 Mensaje recibido (texto): " + message.body);
+            }
+        });
+    };
+
+    document.getElementById('sendBtn').onclick = () => {
+        if (!connected) {
+            log("⚠️ Conéctate primero");
+            return;
+        }
+
+        const destination = document.getElementById('destination').value.trim();
+        if (!destination) {
+            log("⚠️ Debes especificar un destino STOMP (por ejemplo /app/getEntryByUserID)");
+            return;
+        }
+
+        try {
+            const raw = document.getElementById('jsonInput').value;
+            const parsed = JSON.parse(raw);
+
+            client.publish({
+                destination: destination,
+                body: JSON.stringify(parsed),
+                headers: { "content-type": "application/json" }
+            });
+
+            log("📤 Enviado a " + destination + ":\n" + JSON.stringify(parsed, null, 2));
+        } catch (e) {
+            log("❌ JSON inválido: " + e.message);
+        }
     };
 </script>
 </body>

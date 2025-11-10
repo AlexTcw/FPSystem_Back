@@ -4,6 +4,7 @@ import com.fps.back.entry.model.dto.consume.ConsumeJsonFP;
 import com.fps.back.entry.model.dto.consume.ConsumeJsonLong;
 import com.fps.back.entry.model.dto.response.ResponseJsonFP;
 import com.fps.back.entry.model.dto.response.ResponseJsonFPs;
+import com.fps.back.entry.model.dto.response.ResponseJsonInteger;
 import com.fps.back.entry.model.entity.Fingerprint;
 import com.fps.back.entry.model.entity.User;
 import com.fps.back.entry.repository.FpRepository;
@@ -13,8 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,32 +25,73 @@ public class FpServiceImp implements FpService{
     private final FpRepository fpRepository;
     private final UserEntryRepository userEntryRepository;
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseJsonInteger getUsersCount(){
+        return new ResponseJsonInteger((int)userEntryRepository.count());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseJsonFP findActiveFPByDeviceId(ConsumeJsonLong consume) {
+        validConsumeJsonLong(consume);
+
+        if ((!fpRepository.existsFingerprintByDeviceIdAndIsActive(consume.key().intValue(), true))) {
+            throw new IllegalArgumentException("Fingerprint with device id: "+consume.key()+" does not exist or is inactive.");
+        }
+
+        Fingerprint fp = fpRepository.findFingerprintByDeviceIdAndIsActive(consume.key().intValue(), true);
+        User user = fp.getUsuario();
+        return new ResponseJsonFP(
+                user.getUserId(),
+                fp.getFingerprintId(),
+                fp.getDeviceId(),
+                fp.getCreatedAt(),
+                fp.getUpdatedAt(),
+                fp.getIsActive(),
+                fp.getInactiveAt());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseJsonFP findFPByFBId(ConsumeJsonLong consume) {
+        validConsumeJsonLong(consume);
+
+        if (!fpRepository.existsFingerprintByFingerprintId(consume.key())) {
+            throw new IllegalArgumentException("Fingerprint with id: "+consume.key()+" does not exist");
+        }
+
+        Fingerprint fp = fpRepository.findFingerprintByFingerprintId(consume.key());
+        User user = fp.getUsuario();
+        return new ResponseJsonFP(
+                user.getUserId(),
+                fp.getFingerprintId(),
+                fp.getDeviceId(),
+                fp.getCreatedAt(),
+                fp.getUpdatedAt(),
+                fp.getIsActive(),
+                fp.getInactiveAt());
+    }
+
     @Override
     @Transactional(readOnly = true)
     public ResponseJsonFPs findFPByUserId(ConsumeJsonLong consume) {
-        if (consume == null) {
-            throw new IllegalArgumentException("Consume is null");
-        }
-        if (consume.key() == null) {
-            throw new IllegalArgumentException("Consume key is null");
-        }
+        validConsumeJsonLong(consume);
 
         if (!userEntryRepository.existsById(consume.key())) {
             throw new IllegalArgumentException("User does not exist with id " + consume.key());
         }
 
         User user = userEntryRepository.findUserByUserId(consume.key());
-        Set<Fingerprint> userFingerprints = new HashSet<>(fpRepository.findFingerprintByUsuario(user));
 
-        Set<ResponseJsonFP> responseJsonFPs = new HashSet<>();
-        userFingerprints.forEach(fingerprint -> {
-           responseJsonFPs.add(new ResponseJsonFP(user.getUserId(),fingerprint.getDeviceId(),fingerprint.getCreatedAt(),fingerprint.getUpdatedAt(),fingerprint.getIsActive(),fingerprint.getInactiveAt()));
-        });
-        return new ResponseJsonFPs(responseJsonFPs);
+        return new ResponseJsonFPs(getFPResponse(user));
 
     }
 
+
     @Override
+    @Transactional
     public ResponseJsonFP createOrUpdateFingerprint(ConsumeJsonFP consume){
         if (consume == null) {
             throw new IllegalArgumentException("Consume cannot be null");
@@ -74,11 +117,26 @@ public class FpServiceImp implements FpService{
         /*edit*/
         fp = fpRepository.save(fp);
 
-        return new ResponseJsonFP(user.getUserId(),fp.getDeviceId(),
+        return new ResponseJsonFP(user.getUserId(),fp.getFingerprintId(),fp.getDeviceId(),
                 fp.getCreatedAt(),fp.getUpdatedAt(),fp.getIsActive(), null);
     }
 
-    Fingerprint createFP(User user, ConsumeJsonFP consume){
+    private Set<ResponseJsonFP> getFPResponse(User user) {
+        List<Fingerprint> fingerprints = fpRepository.findFingerprintByUsuario(user);
+
+        return fingerprints.stream()
+                .map(f -> new ResponseJsonFP(
+                        user.getUserId(),
+                        f.getFingerprintId(),
+                        f.getDeviceId(),
+                        f.getCreatedAt(),
+                        f.getUpdatedAt(),
+                        f.getIsActive(),
+                        f.getInactiveAt()))
+                .collect(Collectors.toSet());
+    }
+
+    private Fingerprint createFP(User user, ConsumeJsonFP consume){
         return Fingerprint.builder()
                 .usuario(user)
                 .deviceId(consume.deviceID())
@@ -88,7 +146,7 @@ public class FpServiceImp implements FpService{
                 .build();
     }
 
-    Fingerprint editFP(Fingerprint fp, User user, ConsumeJsonFP consume){
+    private Fingerprint editFP(Fingerprint fp, User user, ConsumeJsonFP consume){
         OffsetDateTime inactiveAT = !consume.isActive() ? OffsetDateTime.now() : null;
         return fp.toBuilder()
                 .usuario(user)
@@ -97,6 +155,15 @@ public class FpServiceImp implements FpService{
                 .inactiveAt(inactiveAT)
                 .updatedAt(OffsetDateTime.now())
                 .build();
+    }
+
+    private void validConsumeJsonLong(ConsumeJsonLong consume) {
+        if (consume == null) {
+            throw new IllegalArgumentException("Consume is null");
+        }
+        if (consume.key() == null) {
+            throw new IllegalArgumentException("Consume key is null");
+        }
     }
 
 

@@ -12,4 +12,16 @@ public interface FpRepository extends JpaRepository<Fingerprint, Long> {
     Fingerprint findFingerprintByFingerprintId(Long fingerprintId);
 
     List<Fingerprint> findFingerprintByUsuario(User usuario);
+
+    boolean existsFingerprintByFingerprintId(Long fingerprintId);
+
+    boolean existsFingerprintByDeviceId(Integer deviceId);
+
+    boolean existsFingerprintByDeviceIdAndIsActive(Integer deviceId, Boolean isActive);
+
+    List<Fingerprint> findFingerprintByDeviceId(Integer deviceId);
+
+    Fingerprint findFingerprintByFingerprintIdAndIsActive(Long fingerprintId, Boolean isActive);
+
+    Fingerprint findFingerprintByDeviceIdAndIsActive(Integer deviceId, Boolean isActive);
 }

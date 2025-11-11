@@ -5,6 +5,7 @@ import com.fps.back.entry.model.dto.consume.ConsumeJsonLong;
 import com.fps.back.entry.model.dto.response.ResponseJsonFP;
 import com.fps.back.entry.model.dto.response.ResponseJsonFPs;
 import com.fps.back.entry.model.dto.response.ResponseJsonInteger;
+import com.fps.back.entry.model.dto.response.ResponseJsonRecordEntry;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface FpService {
@@ -20,4 +21,6 @@ public interface FpService {
     ResponseJsonFPs findFPByUserId(ConsumeJsonLong consume);
 
     ResponseJsonFP createOrUpdateFingerprint(ConsumeJsonFP consume);
+
+    ResponseJsonRecordEntry createRecord(ConsumeJsonLong consume);
 }

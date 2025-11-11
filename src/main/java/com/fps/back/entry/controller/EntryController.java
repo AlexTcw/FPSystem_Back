@@ -4,6 +4,7 @@ import com.fps.back.entry.model.dto.consume.ConsumeJsonFP;
 import com.fps.back.entry.model.dto.consume.ConsumeJsonLong;
 import com.fps.back.entry.model.dto.response.ResponseJsonFP;
 import com.fps.back.entry.model.dto.response.ResponseJsonFPs;
+import com.fps.back.entry.model.dto.response.ResponseJsonRecordEntry;
 import com.fps.back.entry.service.fingerprint.FpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -44,6 +45,12 @@ public class EntryController {
     @SendTo("/topic/entriesByDeviceId")
     public ResponseJsonFP getEntryByDeviceID(ConsumeJsonLong consume){
         return fpService.findActiveFPByDeviceId(consume);
+    }
+
+    @MessageMapping("createRecord")
+    @SendTo("/topic/records")
+    public ResponseJsonRecordEntry createRecord(ConsumeJsonLong consume){
+        return fpService.createRecord(consume);
     }
 
 }

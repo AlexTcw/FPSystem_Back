@@ -5,17 +5,22 @@ import com.fps.back.entry.model.dto.consume.ConsumeJsonLong;
 import com.fps.back.entry.model.dto.response.ResponseJsonFP;
 import com.fps.back.entry.model.dto.response.ResponseJsonFPs;
 import com.fps.back.entry.model.dto.response.ResponseJsonInteger;
+import com.fps.back.entry.model.dto.response.ResponseJsonRecordEntry;
 import com.fps.back.entry.model.entity.Fingerprint;
+import com.fps.back.entry.model.entity.Records;
 import com.fps.back.entry.model.entity.User;
+import com.fps.back.entry.model.enums.TypeRecordEnum;
 import com.fps.back.entry.repository.FpRepository;
+import com.fps.back.entry.repository.RecordRepository;
 import com.fps.back.entry.repository.UserEntryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +29,7 @@ public class FpServiceImp implements FpService{
 
     private final FpRepository fpRepository;
     private final UserEntryRepository userEntryRepository;
+    private final RecordRepository recordRepository;
 
 
     @Override
@@ -120,6 +126,76 @@ public class FpServiceImp implements FpService{
         return new ResponseJsonFP(user.getUserId(),fp.getFingerprintId(),fp.getDeviceId(),
                 fp.getCreatedAt(),fp.getUpdatedAt(),fp.getIsActive(), null);
     }
+
+    @Override
+    public ResponseJsonRecordEntry createRecord(ConsumeJsonLong consume) {
+        ResponseJsonRecordEntry response;
+
+            // 1. Verificar huella activa
+            Fingerprint fp = fpRepository.findFingerprintByDeviceIdAndIsActive(
+                    consume.key().intValue(), true);
+
+            if (fp == null) {
+                getRecord();
+                throw new IllegalArgumentException("Fingerprint with device id: " + consume.key() + " does not exist or is inactive.");
+            }
+
+            User user = fp.getUsuario();
+            Set<Records> records = Optional.ofNullable(fp.getRecords()).orElseGet(HashSet::new);
+
+            LocalDateTime now = LocalDateTime.now();
+            String entryDate = null;
+            String exitDate = null;
+
+            // 2. Obtener último registro (si existe)
+            Records lastRecord = records.stream()
+                    .sorted(Comparator.comparing(Records::getTimestamp))
+                    .reduce((first, second) -> second)
+                    .orElse(null);
+
+            // 3. Crear nuevo registro según el caso
+            Records newRecord = new Records();
+
+            if (lastRecord == null) {
+                // No hay registros previos → Entrada
+                newRecord.setType(TypeRecordEnum.ENTRY);
+                entryDate = now.toString();
+            } else if (lastRecord.getType() == TypeRecordEnum.ENTRY) {
+                // Último fue entrada → ahora salida
+                newRecord.setType(TypeRecordEnum.EXIT);
+                entryDate = lastRecord.getTimestamp().toString();
+                exitDate = now.toString();
+            } else if (lastRecord.getType() == TypeRecordEnum.EXIT) {
+                // Último fue salida → ahora entrada
+                newRecord.setType(TypeRecordEnum.ENTRY);
+                entryDate = now.toString();
+            }
+
+            // 4. Asignar hora y agregar al set
+            newRecord.setTimestamp(now);
+
+            /*peristimos para evitar un error de fluenttransacction*/
+            newRecord = recordRepository.save(newRecord);
+            records.add(newRecord);
+            fp.setRecords(records);
+
+            // 5. Persistir
+            fpRepository.save(fp);
+
+            // 6. Respuesta
+            response = new ResponseJsonRecordEntry(user.getUserId(), entryDate, exitDate);
+
+        return response;
+    }
+
+
+    private void getRecord() {
+        Records record = new Records();
+        record.setType(TypeRecordEnum.FAILED);
+        record.setTimestamp(LocalDateTime.now());
+        recordRepository.save(record);
+    }
+
 
     private Set<ResponseJsonFP> getFPResponse(User user) {
         List<Fingerprint> fingerprints = fpRepository.findFingerprintByUsuario(user);

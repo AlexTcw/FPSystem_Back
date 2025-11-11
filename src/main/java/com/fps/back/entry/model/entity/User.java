@@ -42,7 +42,7 @@ public class User implements Serializable {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_schedule",
-            joinColumns = @JoinColumn(name = "user_id"), // Asegúrate de usar el nombre real en la tabla
+            joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "schedule_id"),
             schema = "fps"
     )

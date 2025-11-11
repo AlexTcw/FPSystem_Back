@@ -1,5 +1,6 @@
 package com.fps.back.entry.model.entity;
 
+import com.fps.back.entry.model.enums.ScheduleTypeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,12 +9,14 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "schedule", schema = "fps")
@@ -24,16 +27,19 @@ public class Schedule implements Serializable {
     @Column(name = "schedule_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long scheduleId;
-    @Column(name = "day_of_week", nullable = false)
-    private Integer dayOfWeek;
-    @Column(name = "entry_time", nullable = false)
-    private LocalTime entryTime;
-    @Column(name = "exit_time", nullable = false)
-    private LocalTime exitTime;
     @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    private LocalDateTime startDate;
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private LocalDateTime endDate;
     @Column(name = "is_active")
     private Boolean isActive = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "schedule_type")
+    private ScheduleTypeEnum scheduleType;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ScheduleDetail> details = new ArrayList<>();
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ScheduleIncidence> incidences = new ArrayList<>();
 }

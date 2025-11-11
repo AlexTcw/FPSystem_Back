@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @Entity
@@ -26,4 +28,6 @@ public class Records implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "type_record", nullable = false)
     private TypeRecordEnum type;
+    @Column(name = "timestamp", nullable = false)
+    private LocalDateTime timestamp = LocalDateTime.now();
 }

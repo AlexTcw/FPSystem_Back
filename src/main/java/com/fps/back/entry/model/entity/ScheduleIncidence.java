@@ -34,6 +34,8 @@ public class ScheduleIncidence implements Serializable {
     private Boolean justified;
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
+    @Column(name = "date", nullable = false)
+    private LocalDateTime incidenceDate = LocalDateTime.now();
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;

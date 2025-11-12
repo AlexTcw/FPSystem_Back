@@ -1,4 +1,4 @@
-package com.fps.back.entry.service.user_entry;
+package com.fps.back.entry.service.userEntry;
 
 import com.fps.back.entry.model.dto.response.ResponseJsonUser;
 import org.springframework.data.domain.Page;

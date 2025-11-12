@@ -6,7 +6,7 @@ import com.fps.back.entry.model.dto.response.ResponseJsonSchedule;
 import com.fps.back.entry.model.dto.response.ResponseJsonUser;
 import com.fps.back.entry.model.dto.response.ResponseJsonUserScheduleDetail;
 import com.fps.back.entry.service.schedule.ScheduleService;
-import com.fps.back.entry.service.user_entry.UserEntryService;
+import com.fps.back.entry.service.userEntry.UserEntryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

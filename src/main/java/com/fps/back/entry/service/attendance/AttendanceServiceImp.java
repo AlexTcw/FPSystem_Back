@@ -1,4 +1,4 @@
-package com.fps.back.entry.service.Incidence;
+package com.fps.back.entry.service.attendance;
 
 import com.fps.back.entry.repository.ScheduleRepository;
 import com.fps.back.entry.repository.UserEntryRepository;
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class IncidenceServiceImp implements IncidenceService {
+public class AttendanceServiceImp implements AttendanceService {
     private final ScheduleRepository scheduleRepository;
     private final UserEntryRepository userRepository;
 

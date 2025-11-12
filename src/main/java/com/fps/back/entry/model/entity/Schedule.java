@@ -42,4 +42,5 @@ public class Schedule implements Serializable {
     private List<ScheduleDetail> details = new ArrayList<>();
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ScheduleIncidence> incidences = new ArrayList<>();
+
 }

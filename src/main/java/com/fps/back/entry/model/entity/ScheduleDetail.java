@@ -30,8 +30,6 @@ public class ScheduleDetail implements Serializable {
     private LocalTime entryTime;
     @Column(name = "exit_time", nullable = false)
     private LocalTime exitTime;
-    @Column(name = "is_active")
-    private Boolean isActive = true;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;

@@ -27,7 +27,7 @@ public class ScheduleEvent implements Serializable {
     private Long schedule_event_id;
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type")
-    private ScheduleTypeEnum eventType;
+    private TypeRecordEnum eventType;
     private TypeRecordEnum incidenceType;
     @Column(name = "justified")
     private Boolean justified = false;

@@ -2,9 +2,11 @@ package com.fps.back.entry.controller;
 
 import com.fps.back.entry.model.dto.consume.ConsumeJsonSchedule;
 import com.fps.back.entry.model.dto.dto.UserSchedule;
+import com.fps.back.entry.model.dto.response.ResponseJsonIncidence;
 import com.fps.back.entry.model.dto.response.ResponseJsonSchedule;
 import com.fps.back.entry.model.dto.response.ResponseJsonUser;
 import com.fps.back.entry.model.dto.response.ResponseJsonUserScheduleDetail;
+import com.fps.back.entry.service.attendance.AttendanceService;
 import com.fps.back.entry.service.schedule.ScheduleService;
 import com.fps.back.entry.service.userEntry.UserEntryService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDateTime;
+import java.util.Set;
+
 
 @RestController
 @RequestMapping("entry")
@@ -22,6 +27,7 @@ public class UsersEntryController  {
 
     private final UserEntryService userEntryService;
     private final ScheduleService scheduleService;
+    private final AttendanceService attendanceService;
 
 
     @GetMapping(value = "users/{page}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -57,5 +63,12 @@ public class UsersEntryController  {
     @GetMapping(value = "schedule/details/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseJsonUserScheduleDetail> getUserScheduleDetail(@PathVariable Long id){
         return new ResponseEntity<>(scheduleService.getScheduleDetail(id), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "schedule/incidence/{id}",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Set<ResponseJsonIncidence>> getIncidenceByScheduleId(@PathVariable Long id,
+                                                                               @RequestParam(name = "startDate", required = false) LocalDateTime startDate,
+                                                                               @RequestParam(name = "endDate", required = false) LocalDateTime endDate){
+        return new ResponseEntity<>(attendanceService.getIncidenceByScheduleIdAndDate(id, startDate, endDate), HttpStatus.OK);
     }
 }

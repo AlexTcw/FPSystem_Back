@@ -5,4 +5,8 @@ public enum TypeRecordEnum {
     ENTRY,
     FAILED,
     UNKNOWN,
+    DELAY,
+    ABSENCE,
+    PERMISSION,
+    OTHER
 }

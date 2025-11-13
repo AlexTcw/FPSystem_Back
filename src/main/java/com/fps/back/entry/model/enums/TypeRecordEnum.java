@@ -8,5 +8,6 @@ public enum TypeRecordEnum {
     DELAY,
     ABSENCE,
     PERMISSION,
-    OTHER
+    OTHER,
+    ATTENDANCE
 }

@@ -1,7 +1,10 @@
 package com.fps.back.entry.repository;
 
+import com.fps.back.entry.model.dto.response.ResponseJsonAttendance;
 import com.fps.back.entry.model.dto.response.ResponseJsonIncidence;
 import com.fps.back.entry.model.entity.ScheduleEvent;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,11 +29,38 @@ public interface ScheduleEventRepository extends JpaRepository<ScheduleEvent, Lo
     WHERE S.scheduleId = :schedule_id
       AND E.eventType IN ('DELAY', 'ABSENCE', 'PERMISSION', 'OTHER')
       AND E.createdAt BETWEEN :start_date AND :end_date
-""")
+    """)
     Set<ResponseJsonIncidence> getIncidenceByScheduleIdAndDate(
             @Param("schedule_id") Long scheduleID,
             @Param("start_date") LocalDateTime startDate,
             @Param("end_date") LocalDateTime endDate
     );
+
+    @Query("""
+            SELECT new com.fps.back.entry.model.dto.response.ResponseJsonAttendance(
+                        U.userId,S.scheduleId,E.schedule_event_id,
+                        CONCAT(U.firstName, ' ', U.lastName),
+                        U.email, U.username, E.createdAt
+                        )
+            FROM User_entry U
+            JOIN U.schedules S
+            JOIN S.events E
+            WHERE :keyword IS NULL
+            OR :keyword = ''
+            OR CAST(U.userId AS string) = :keyword
+            OR UPPER(translate(U.firstName, 'ñáéíóúàèìòùãõâêîôûäëïöüç', 'naeiouaeiouaeiouc'))
+               LIKE CONCAT('%', UPPER(translate(REPLACE(:keyword, '_', ''), 'ñáéíóúàèìòùãõâêîôûäëïöüç', 'naeiouaeiouaeiouc')), '%')
+            OR UPPER(translate(U.email, 'ñáéíóúàèìòùãõâêîôûäëïöüç', 'naeiouaeiouaeiouc'))
+               LIKE CONCAT('%', UPPER(translate(REPLACE(:keyword, '_', ''), 'ñáéíóúàèìòùãõâêîôûäëïöüç', 'naeiouaeiouaeiouc')), '%')
+            OR UPPER(translate(S.scheduleType, 'ñáéíóúàèìòùãõâêîôûäëïöüç', 'naeiouaeiouaeiouc'))
+               LIKE CONCAT('%', UPPER(translate(REPLACE(:keyword, '_', ''), 'ñáéíóúàèìòùãõâêîôûäëïöüç', 'naeiouaeiouaeiouc')), '%')
+            AND E.eventType IN ('ATTENDANCE')
+            AND E.createdAt BETWEEN :start_date AND :end_date
+            ORDER BY  E.schedule_event_id, S.scheduleId DESC
+            """)
+    Page<ResponseJsonAttendance> getAttendancePage(@Param("keyword") String keyword,
+                                                   @Param("start_date") LocalDateTime startDate,
+                                                   @Param("end_date") LocalDateTime endDate,
+                                                   Pageable pageable);
 
 }

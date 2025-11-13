@@ -2,10 +2,7 @@ package com.fps.back.entry.controller;
 
 import com.fps.back.entry.model.dto.consume.ConsumeJsonSchedule;
 import com.fps.back.entry.model.dto.dto.UserSchedule;
-import com.fps.back.entry.model.dto.response.ResponseJsonIncidence;
-import com.fps.back.entry.model.dto.response.ResponseJsonSchedule;
-import com.fps.back.entry.model.dto.response.ResponseJsonUser;
-import com.fps.back.entry.model.dto.response.ResponseJsonUserScheduleDetail;
+import com.fps.back.entry.model.dto.response.*;
 import com.fps.back.entry.service.attendance.AttendanceService;
 import com.fps.back.entry.service.schedule.ScheduleService;
 import com.fps.back.entry.service.userEntry.UserEntryService;
@@ -70,5 +67,16 @@ public class UsersEntryController  {
                                                                                @RequestParam(name = "startDate", required = false) LocalDateTime startDate,
                                                                                @RequestParam(name = "endDate", required = false) LocalDateTime endDate){
         return new ResponseEntity<>(attendanceService.getIncidenceByScheduleIdAndDate(id, startDate, endDate), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "schedule/attendance/{page}",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Page<ResponseJsonAttendance>> getAttendanceByScheduleId(@PathVariable(name = "page", required = false) Integer page,
+                                                                                  @RequestParam(name = "keyword", required = false, defaultValue = "") String keyword,
+                                                                                  @RequestParam(name = "size", required = false, defaultValue = "10") Integer size,
+                                                                                  @RequestParam(name = "startDate", required = false) LocalDateTime startDate,
+                                                                                  @RequestParam(name = "endDate", required = false) LocalDateTime endDate){
+        return new ResponseEntity<>(attendanceService.getAttendancePage(startDate,
+                endDate,keyword, page <= 1 ? 0 : page,size),HttpStatus.OK);
+
     }
 }
